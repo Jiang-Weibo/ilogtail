@@ -60,7 +60,7 @@ ram_limit_nproc=\$((ram_size / 1024 / 768))
 EOF
 
   if [ $EXPORT_GO_ENVS ]; then
-    envs=($(go env | grep -E 'GOPRIVATE=".+"|GOPROXY=".+"'))
+    envs=($(go env | grep -E 'GOPRIVATE=(".+"|'\''.+'\'')|GOPROXY=(".+"|'\''.+'\'')'))
     for v in ${envs[@]}; do
       echo "go env -w $v" >> $BUILD_SCRIPT_FILE
     done
@@ -92,6 +92,9 @@ function generateCopyScript() {
   echo 'BINDIR=$(cd $(dirname "${BASH_SOURCE[0]}")&& cd .. && pwd)/'${OUT_DIR}'/' >>$COPY_SCRIPT_FILE
   echo 'rm -rf $BINDIR && mkdir $BINDIR' >>$COPY_SCRIPT_FILE
   echo "id=\$(docker create ${REPOSITORY}:${VERSION})" >>$COPY_SCRIPT_FILE
+  if [ $BUILD_LOGTAIL_UT = "ON" ]; then
+    echo 'docker cp "$id":/src/core/build core/build' >>$COPY_SCRIPT_FILE
+  fi
 
   if [ $CATEGORY = "plugin" ]; then
     echo 'docker cp "$id":/src/'${OUT_DIR}'/libPluginBase.so $BINDIR' >>$COPY_SCRIPT_FILE
