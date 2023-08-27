@@ -4,8 +4,11 @@
 #include <vector>
 #include <memory>
 #include <stack>
-enum TokenType
-{
+#include <algorithm>
+#include "/opt/logtail/deps/include/json/json.h"
+
+namespace parser_test {
+enum TokenType {
     TOKEN_UNKNOWN = 0,
     TOKEN_LEFT_BRACKET,
     TOKEN_RIGHT_BRACKET,
@@ -19,8 +22,7 @@ enum TokenType
     TOKEN_VALUE,
 };
 
-struct Token
-{
+struct Token {
     TokenType type;
     std::string token;
 
@@ -29,8 +31,7 @@ public:
     ~Token() {}
 };
 
-class BashParser
-{
+class BashParser {
 private:
     std::string bash_expr;
     std::vector<Token> tokens;
@@ -38,39 +39,38 @@ private:
     std::string json_expr;
     size_t tokens_idx;
     bool LexicalAnalysis();
-    bool IsSeperator(const char &ch);
+    bool IsSeperator(const char& ch);
     bool Parsing();
     bool RecursiveDescent();
     bool ParseExpr();
     bool ParseStat();
-    inline int GetPriority(TokenType &type)
-    {
-        switch (type)
-        {
-        case TOKEN_BINARY_EQUAL:
-            return 4;
-            break;
-        case TOKEN_UNARY_NOT:
-            return 3;
-            break;
-        case TOKEN_BINARY_OR:
-            return 2;
-            break;
-        case TOKEN_BINARY_AND:
-            return 1;
-            break;
-        default:
-            return -1;
-            break;
+    Json::Value MakeJsonElement(std::vector<Token>&, Json::Value&);
+    inline int GetPriority(TokenType& type) {
+        switch (type) {
+            case TOKEN_BINARY_EQUAL:
+                return 4;
+                break;
+            case TOKEN_UNARY_NOT:
+                return 3;
+                break;
+            case TOKEN_BINARY_OR:
+                return 2;
+                break;
+            case TOKEN_BINARY_AND:
+                return 1;
+                break;
+            default:
+                return -1;
+                break;
         }
     };
     bool MakingJson();
+
 public:
     BashParser() = default;
     ~BashParser() = default;
     std::string GetParsedJson(std::string expr);
-    auto GetTokens() -> decltype(tokens)
-    {
-        return tokens;
-    }
+    auto GetTokens() -> decltype(tokens) { return tokens; }
 };
+
+} // namespace parser_test
