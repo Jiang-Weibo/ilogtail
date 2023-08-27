@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <memory>
 #include <stack>
@@ -37,6 +38,7 @@ private:
     std::vector<Token> tokens;
     std::vector<char> seperators;
     std::string json_expr;
+    std::unordered_set<char> preserved_id{'[', ']', '=', '&', '|', '!', '$', '\\'};
     size_t tokens_idx;
     bool LexicalAnalysis();
     bool IsSeperator(const char& ch);

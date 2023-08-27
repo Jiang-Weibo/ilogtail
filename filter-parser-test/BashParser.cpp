@@ -19,6 +19,28 @@ bool BashParser::LexicalAnalysis() {
             case '\r':
                 ++idx;
                 break;
+            case '\\':
+                if (idx + 1 < n) {
+                    if (preserved_id.count(bash_expr[idx + 1])) {
+                        ++idx;
+                        while (idx < n and !IsSeperator(bash_expr[idx])) {
+                            id_value += bash_expr[idx];
+                            ++idx;
+                        }
+                        tokens.push_back({TOKEN_VALUE, id_value});
+                        id_value.clear();
+                    } else {
+                        std::cout << "error occurs when matching '\\'. It seems '\\" + bash_expr[idx + 1]
+                                + std::string("' is not a valid id");
+                        std::cout << std::endl;
+                        return false;
+                    }
+                } else {
+                    std::cout << "error occurs when matching '\\'. It seems you don't have enough space for next char";
+                    std::cout << std::endl;
+                    return false;
+                }
+                break;
             case '[':
                 if (idx + 1 < n) {
                     if (bash_expr[idx + 1] == ' ') {
@@ -53,6 +75,7 @@ bool BashParser::LexicalAnalysis() {
                     return false;
                 }
                 break;
+            /*
             case '-':
                 if (idx + 1 < n) {
                     if (bash_expr[idx + 1] == 'a') {
@@ -73,6 +96,7 @@ bool BashParser::LexicalAnalysis() {
                     return false;
                 }
                 break;
+                */
             case '=':
                 if (idx + 1 < n) {
                     if (bash_expr[idx + 1] == '=') {
@@ -141,12 +165,12 @@ bool BashParser::LexicalAnalysis() {
                 break;
             default:
                 // TOKEN_VALUE, 一直往后找，期待一个空格的出现
-                id_value.clear();
                 while (idx < n and !IsSeperator(bash_expr[idx])) {
                     id_value += bash_expr[idx];
                     ++idx;
                 }
                 tokens.push_back({TOKEN_VALUE, id_value});
+                id_value.clear();
                 break;
         };
     }
@@ -347,7 +371,7 @@ bool BashParser::ParseStat() {
         }
         tokens_idx += 3;
         if (tokens_idx < n) {
-            if (tokens.at(tokens_idx).type != TOKEN_BINARY_and and tokens.at(tokens_idx).type != TOKEN_BINARY_or) {
+            if (tokens.at(tokens_idx).type != TOKEN_BINARY_AND and tokens.at(tokens_idx).type != TOKEN_BINARY_OR) {
                 break;
             } else {
                 ++tokens_idx;
@@ -375,6 +399,7 @@ Json::Value BashParser::MakeJsonElement(std::vector<Token>& tmp_vec, Json::Value
         parent_json["operands"].append(child_json);
     } else if (last_elem.type == TOKEN_BINARY_AND) {
         child_json["operator"] = "and";
+        child_json["operands"];
         MakeJsonElement(tmp_vec, child_json);
         MakeJsonElement(tmp_vec, child_json);
         // if parent_json has attribute named "operands", add child_json to it. Otherwise skip it.
@@ -385,6 +410,7 @@ Json::Value BashParser::MakeJsonElement(std::vector<Token>& tmp_vec, Json::Value
         }
     } else if (last_elem.type == TOKEN_BINARY_OR) {
         child_json["operator"] = "or";
+        child_json["operands"];
         MakeJsonElement(tmp_vec, child_json);
         MakeJsonElement(tmp_vec, child_json);
         // if parent_json has attribute named "operands", add child_json to it. Otherwise skip it.
@@ -395,6 +421,7 @@ Json::Value BashParser::MakeJsonElement(std::vector<Token>& tmp_vec, Json::Value
         }
     } else if (last_elem.type == TOKEN_UNARY_NOT) {
         child_json["operator"] = "not";
+        child_json["operands"];
         MakeJsonElement(tmp_vec, child_json);
         // if parent_json has attribute named "operands", add child_json to it. Otherwise skip it.
         if (parent_json.isMember("operands")) {
