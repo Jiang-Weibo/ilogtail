@@ -186,7 +186,7 @@ bool BashParser::IsSeperator(const char& ch) {
     return false;
 }
 
-bool BashParser::Parsing() {
+bool BashParser::Parse() {
     std::vector<Token> token_stream(std::move(tokens));
     tokens.clear();
     auto op_stk = std::stack<Token>();
@@ -280,29 +280,29 @@ bool BashParser::Parsing() {
 
 bool BashParser::RecursiveDescent() {
     tokens_idx = 0;
-    return ParseExpr();
+    return CheckExpr();
 }
 
-bool BashParser::ParseExpr() {
+bool BashParser::CheckExpr() {
     const int n = tokens.size();
     if (tokens_idx >= n) {
-        std::cout << "error occurs in ParseExpr. Invalid syntax." << std::endl;
+        std::cout << "error occurs in CheckExpr. Invalid syntax." << std::endl;
         return false;
     }
     while (tokens_idx < n) {
         if (tokens.at(tokens_idx).type != TOKEN_LEFT_BRACKET) {
-            std::cout << "error occurs in ParseExpr. Missing '['" << std::endl;
+            std::cout << "error occurs in CheckExpr. Missing '['" << std::endl;
             return false;
         } else {
             ++tokens_idx;
         }
-        bool flag = ParseStat();
+        bool flag = CheckStat();
         if (!flag) {
-            std::cout << "error occurs in ParseStat. Parsing failed" << std::endl;
+            std::cout << "error occurs in CheckStat. Parsing failed" << std::endl;
             return false;
         }
         if (tokens_idx >= n or tokens.at(tokens_idx).type != TOKEN_RIGHT_BRACKET) {
-            std::cout << "error occurs in ParseExpr. Missing ']'" << std::endl;
+            std::cout << "error occurs in CheckExpr. Missing ']'" << std::endl;
             return false;
         } else {
             ++tokens_idx;
@@ -318,19 +318,19 @@ bool BashParser::ParseExpr() {
     if (tokens_idx == n) {
         return true;
     } else if (tokens_idx > n) {
-        std::cout << "error occurs in ParseExpr. Invalid Syntax: Unknown error." << std::endl;
+        std::cout << "error occurs in CheckExpr. Invalid Syntax: Unknown error." << std::endl;
         return false;
     } else {
-        std::cout << "error occurs in ParseExpr. Invalid Syntax: '" << tokens.at(tokens_idx).token
+        std::cout << "error occurs in CheckExpr. Invalid Syntax: '" << tokens.at(tokens_idx).token
                   << "' doesn't match any syntax." << std::endl;
         return false;
     }
 }
 
-bool BashParser::ParseStat() {
+bool BashParser::CheckStat() {
     const int n = tokens.size();
     if (tokens_idx >= n) {
-        std::cout << "error occurs in ParseStat. Invalid Stat" << std::endl;
+        std::cout << "error occurs in CheckStat. Invalid Stat" << std::endl;
         return false;
     }
     while (tokens_idx < n) {
@@ -338,34 +338,34 @@ bool BashParser::ParseStat() {
             ++tokens_idx;
         }
         if (tokens_idx >= n) {
-            std::cout << "error ocuurs in ParseStat. Invalid Stat. '!' doesn't matched anything." << std::endl;
+            std::cout << "error ocuurs in CheckStat. Invalid Stat. '!' doesn't matched anything." << std::endl;
             return false;
         }
         int key_idx = tokens_idx, value_idx = tokens_idx + 2, equal_idx = tokens_idx + 1;
         if (key_idx >= n) {
-            std::cout << "error occurs in ParseStat. Missing Key('$key') part." << std::endl;
+            std::cout << "error occurs in CheckStat. Missing Key('$key') part." << std::endl;
             return false;
         }
         if (equal_idx >= n) {
-            std::cout << "error occurs in ParseStat. Missing Equal('==') part." << std::endl;
+            std::cout << "error occurs in CheckStat. Missing Equal('==') part." << std::endl;
             return false;
         }
         if (value_idx >= n) {
-            std::cout << "error occurs in ParseStat. Missing Value('value') part." << std::endl;
+            std::cout << "error occurs in CheckStat. Missing Value('value') part." << std::endl;
             return false;
         }
         if (tokens.at(key_idx).type != TOKEN_KEY) {
-            std::cout << "error occurs in ParseStat. '" << tokens.at(key_idx).token << "' is not a valid 'Key'. "
+            std::cout << "error occurs in CheckStat. '" << tokens.at(key_idx).token << "' is not a valid 'Key'. "
                       << std::endl;
             return false;
         }
         if (tokens.at(equal_idx).type != TOKEN_BINARY_EQUAL) {
-            std::cout << "error occurs in ParseStat. '" << tokens.at(equal_idx).token << "' should be '==' "
+            std::cout << "error occurs in CheckStat. '" << tokens.at(equal_idx).token << "' should be '==' "
                       << std::endl;
             return false;
         }
         if (tokens.at(value_idx).type != TOKEN_VALUE) {
-            std::cout << "error occurs in ParseStat. '" << tokens.at(value_idx).token << "' is not a valid 'Value'. "
+            std::cout << "error occurs in CheckStat. '" << tokens.at(value_idx).token << "' is not a valid 'Value'. "
                       << std::endl;
             return false;
         }
@@ -396,7 +396,11 @@ Json::Value BashParser::MakeJsonElement(std::vector<Token>& tmp_vec, Json::Value
         child_json["key"] = k.token;
         child_json["exp"] = v.token;
         child_json["type"] = "regex";
-        parent_json["operands"].append(child_json);
+        if (parent_json.isMember("operands")) {
+            parent_json["operands"].append(child_json);
+        } else if (parent_json.isMember("filter_expression")) {
+            parent_json["filter_expression"] = child_json;
+        }
     } else if (last_elem.type == TOKEN_BINARY_AND) {
         child_json["operator"] = "and";
         child_json["operands"];
@@ -436,33 +440,32 @@ Json::Value BashParser::MakeJsonElement(std::vector<Token>& tmp_vec, Json::Value
     return parent_json;
 }
 
-bool BashParser::MakingJson() {
-    Json::Value res;
-    res["filter_expression"];
+bool BashParser::MakeJson() {
+    json_res.clear();
+    json_res["filter_expression"];
     auto tmp_vec(tokens);
     std::reverse(tmp_vec.begin(), tmp_vec.end());
-    auto qop = MakeJsonElement(tmp_vec, res);
-    if (qop.compare(res) == 0) {
-        std::cout << "convert json success, json file: " << std::endl;
-        Json::StreamWriterBuilder builder;
-        std::cout << Json::writeString(builder, res) << std::endl;
+    auto qop = MakeJsonElement(tmp_vec, json_res);
+    if (qop.compare(json_res) == 0)
         return true;
-    }
     return false;
 }
 
-std::string BashParser::GetParsedJson(std::string expr) {
-    if (seperators.empty()) {
-        seperators.push_back(' ');
-        seperators.push_back('\n');
-        seperators.push_back('\r');
-        seperators.push_back('\t');
-    }
+void BashParser::Reset() {
+
+    
+}
+
+Json::Value BashParser::GetParsedJson(std::string expr) {
     if (expr.empty()) {
         std::cout << "GetParsedJson error, expr empty." << std::endl;
         return {};
     }
-    this->bash_expr = expr;
+
+    tokens.clear();
+    bash_expr = expr;
+    json_res.clear();
+
     if (!LexicalAnalysis()) {
         std::cout << "Lexical Analysis error, couldn't parse the expression: " << expr << std::endl;
         return {};
@@ -473,17 +476,17 @@ std::string BashParser::GetParsedJson(std::string expr) {
         return {};
     }
     std::cout << "Syntax success." << std::endl;
-    if (!Parsing()) {
-        std::cout << "Parsing error, couldn't parse the expression: " << expr << std::endl;
+    if (!Parse()) {
+        std::cout << "Parse error, couldn't parse the expression: " << expr << std::endl;
         return {};
     }
     std::cout << "Parsing success." << std::endl;
-    if (!MakingJson()) {
+    if (!MakeJson()) {
         std::cout << "Json error, couldn't parse the expression: " << expr << std::endl;
         return {};
     }
     std::cout << "Convert success." << std::endl;
-    return {};
+    return json_res;
 }
 
 } // namespace parser_test

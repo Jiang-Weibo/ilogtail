@@ -34,18 +34,20 @@ public:
 
 class BashParser {
 private:
-    std::string bash_expr;
     std::vector<Token> tokens;
-    std::vector<char> seperators;
-    std::string json_expr;
+    std::string bash_expr;
+    Json::Value json_res;
+    std::vector<char> seperators{' ', '\n', '\t', '\r'};
     std::unordered_set<char> preserved_id{'[', ']', '=', '&', '|', '!', '$', '\\'};
     size_t tokens_idx;
+
+private:
     bool LexicalAnalysis();
     bool IsSeperator(const char& ch);
-    bool Parsing();
+    bool Parse();
     bool RecursiveDescent();
-    bool ParseExpr();
-    bool ParseStat();
+    bool CheckExpr();
+    bool CheckStat();
     Json::Value MakeJsonElement(std::vector<Token>&, Json::Value&);
     inline int GetPriority(TokenType& type) {
         switch (type) {
@@ -66,12 +68,12 @@ private:
                 break;
         }
     };
-    bool MakingJson();
-
+    bool MakeJson();
+    void Reset();
 public:
     BashParser() = default;
     ~BashParser() = default;
-    std::string GetParsedJson(std::string expr);
+    Json::Value GetParsedJson(std::string expr);
     auto GetTokens() -> decltype(tokens) { return tokens; }
 };
 
