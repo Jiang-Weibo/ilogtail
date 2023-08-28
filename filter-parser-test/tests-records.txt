@@ -1,0 +1,346 @@
+=========================================================================================
+parsing "[ $student == Alice ]"...
+Tokenization success.
+Syntax success.
+Parsing success.
+Convert success.
+{
+	"filter_expression" : 
+	{
+		"exp" : "Alice",
+		"key" : "student",
+		"type" : "regex"
+	}
+}
+=========================================================================================
+parsing "[$student == Alice ]"...
+error occurs when matching '['. Couldn't parse '[$'
+Lexical Analysis error, couldn't parse the expression: [$student == Alice ]
+=========================================================================================
+parsing "[ $student == \&Alice&Bob ] && [ ! $age == 19 || $addr == London ]"...
+Tokenization success.
+Syntax success.
+Parsing success.
+Convert success.
+{
+	"filter_expression" : 
+	{
+		"operands" : 
+		[
+			{
+				"exp" : "&Alice&Bob",
+				"key" : "student",
+				"type" : "regex"
+			},
+			{
+				"operands" : 
+				[
+					{
+						"operands" : 
+						[
+							{
+								"exp" : "19",
+								"key" : "age",
+								"type" : "regex"
+							}
+						],
+						"operator" : "not"
+					},
+					{
+						"exp" : "London",
+						"key" : "addr",
+						"type" : "regex"
+					}
+				],
+				"operator" : "or"
+			}
+		],
+		"operator" : "and"
+	}
+}
+=========================================================================================
+parsing "[ $student == Bob&Alice && $age == 22 ] || [ $student == Alice && $age == 19 || $addr == London ]"...
+Tokenization success.
+Syntax success.
+Parsing success.
+Convert success.
+{
+	"filter_expression" : 
+	{
+		"operands" : 
+		[
+			{
+				"operands" : 
+				[
+					{
+						"exp" : "Bob&Alice",
+						"key" : "student",
+						"type" : "regex"
+					},
+					{
+						"exp" : "22",
+						"key" : "age",
+						"type" : "regex"
+					}
+				],
+				"operator" : "and"
+			},
+			{
+				"operands" : 
+				[
+					{
+						"exp" : "Alice",
+						"key" : "student",
+						"type" : "regex"
+					},
+					{
+						"operands" : 
+						[
+							{
+								"exp" : "19",
+								"key" : "age",
+								"type" : "regex"
+							},
+							{
+								"exp" : "London",
+								"key" : "addr",
+								"type" : "regex"
+							}
+						],
+						"operator" : "or"
+					}
+				],
+				"operator" : "and"
+			}
+		],
+		"operator" : "or"
+	}
+}
+=========================================================================================
+parsing "[ $info == WARNING|ERROR || $suffix == *.log ] && [ $user == .{2,5}sys* ]"...
+Tokenization success.
+Syntax success.
+Parsing success.
+Convert success.
+{
+	"filter_expression" : 
+	{
+		"operands" : 
+		[
+			{
+				"operands" : 
+				[
+					{
+						"exp" : "WARNING|ERROR",
+						"key" : "info",
+						"type" : "regex"
+					},
+					{
+						"exp" : "*.log",
+						"key" : "suffix",
+						"type" : "regex"
+					}
+				],
+				"operator" : "or"
+			},
+			{
+				"exp" : ".{2,5}sys*",
+				"key" : "user",
+				"type" : "regex"
+			}
+		],
+		"operator" : "and"
+	}
+}
+=========================================================================================
+parsing "![ $student == Alice ]"...
+Tokenization success.
+error occurs in CheckExpr. Missing '['
+Syntax error, couldn't parse the expression: ![ $student == Alice ]
+=========================================================================================
+parsing "[ $info == \$post&&$get || $date == 2017\07\06 ] && [ !$LEVEL == WARNING ]"...
+Tokenization success.
+Syntax success.
+Parsing success.
+Convert success.
+{
+	"filter_expression" : 
+	{
+		"operands" : 
+		[
+			{
+				"operands" : 
+				[
+					{
+						"exp" : "$post&&$get",
+						"key" : "info",
+						"type" : "regex"
+					},
+					{
+						"exp" : "2017\\07\\06",
+						"key" : "date",
+						"type" : "regex"
+					}
+				],
+				"operator" : "or"
+			},
+			{
+				"operands" : 
+				[
+					{
+						"exp" : "WARNING",
+						"key" : "LEVEL",
+						"type" : "regex"
+					}
+				],
+				"operator" : "not"
+			}
+		],
+		"operator" : "and"
+	}
+}
+=========================================================================================
+parsing "[ $$usr == sys || $LEVEL == WARNING|ERROR ] && [ $date == */09/* ]"...
+Tokenization success.
+Syntax success.
+Parsing success.
+Convert success.
+{
+	"filter_expression" : 
+	{
+		"operands" : 
+		[
+			{
+				"operands" : 
+				[
+					{
+						"exp" : "sys",
+						"key" : "$usr",
+						"type" : "regex"
+					},
+					{
+						"exp" : "WARNING|ERROR",
+						"key" : "LEVEL",
+						"type" : "regex"
+					}
+				],
+				"operator" : "or"
+			},
+			{
+				"exp" : "*/09/*",
+				"key" : "date",
+				"type" : "regex"
+			}
+		],
+		"operator" : "and"
+	}
+}
+=========================================================================================
+parsing "[ Alice == $student ]"...
+Tokenization success.
+error occurs in CheckStat. 'Alice' is not a valid 'Key'. 
+error occurs in CheckStat. Parsing failed
+Syntax error, couldn't parse the expression: [ Alice == $student ]
+=========================================================================================
+parsing "[ $student == \Alice ]"...
+ matching '\'. It seems you don't have enough space for next char' is not a valid id
+Lexical Analysis error, couldn't parse the expression: [ $student == \Alice ]
+=========================================================================================
+parsing "[ $student == Alice && [ $age == 22 || $height == 167 ] ]"...
+Tokenization success.
+error occurs in CheckStat. '[' is not a valid 'Key'. 
+error occurs in CheckStat. Parsing failed
+Syntax error, couldn't parse the expression: [ $student == Alice && [ $age == 22 || $height == 167 ] ]
+=========================================================================================
+parsing "[ $student == Alice ] && [ $age == 22 || $height == 167 ]"...
+Tokenization success.
+Syntax success.
+Parsing success.
+Convert success.
+{
+	"filter_expression" : 
+	{
+		"operands" : 
+		[
+			{
+				"exp" : "Alice",
+				"key" : "student",
+				"type" : "regex"
+			},
+			{
+				"operands" : 
+				[
+					{
+						"exp" : "22",
+						"key" : "age",
+						"type" : "regex"
+					},
+					{
+						"exp" : "167",
+						"key" : "height",
+						"type" : "regex"
+					}
+				],
+				"operator" : "or"
+			}
+		],
+		"operator" : "and"
+	}
+}
+=========================================================================================
+parsing "[ $and == \&\&id]"...
+Tokenization success.
+error occurs in CheckExpr. Missing ']'
+Syntax error, couldn't parse the expression: [ $and == \&\&id]
+=========================================================================================
+parsing "[ $and == \&&id]"...
+Tokenization success.
+error occurs in CheckExpr. Missing ']'
+Syntax error, couldn't parse the expression: [ $and == \&&id]
+=========================================================================================
+parsing "[ $&&student == \&&Alice ] || [ $$$value == fre&&shman ] && [ $$age == 18 || $height == \[167 ]"...
+Tokenization success.
+Syntax success.
+Parsing success.
+Convert success.
+{
+	"filter_expression" : 
+	{
+		"operands" : 
+		[
+			{
+				"operands" : 
+				[
+					{
+						"exp" : "&&Alice",
+						"key" : "&&student",
+						"type" : "regex"
+					},
+					{
+						"exp" : "fre&&shman",
+						"key" : "$$value",
+						"type" : "regex"
+					}
+				],
+				"operator" : "or"
+			},
+			{
+				"operands" : 
+				[
+					{
+						"exp" : "18",
+						"key" : "$age",
+						"type" : "regex"
+					},
+					{
+						"exp" : "[167",
+						"key" : "height",
+						"type" : "regex"
+					}
+				],
+				"operator" : "or"
+			}
+		],
+		"operator" : "and"
+	}
+}
